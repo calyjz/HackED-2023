@@ -1,4 +1,4 @@
-const { EmbedBuilder } = require('@wozardlozard/discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('@wozardlozard/discord.js');
 const { OpenAI } = require('openai');
 const process = require('node:process');
 
@@ -22,15 +22,28 @@ exports.initialScan = async function(content, author, guild) {
             var embed = new EmbedBuilder()
                 .setTitle("Message Flagged")
                 .setColor("Blurple")
-                .addFields({
-                    name: "Message", value: content,
-                    name: "Violated categories", value: Object.entries(result.categories).filter(x => x[1]).map(x => x[0] + ` (${(result.category_scores[x[0]] * 100).toFixed(2)}% confidence)`).join("\n")
-                });
+                .addFields([
+                    { name: "Message", value: content },
+                    { name: "Author", value: `<@!${author.id}>`, inline: true },
+                    { name: "Violated categories", value: Object.entries(result.categories).filter(x => x[1]).map(x => x[0] + ` (${(result.category_scores[x[0]] * 100).toFixed(2)}% confidence)`).join("\n"), inline: true },
+                ]);
 
             var channel = guild.channels.cache.find(x => x.id == process.env.NOTIFCHANNEL);
 
+            var rows = [
+                new ActionRowBuilder().addComponents(
+                    new ButtonBuilder().setCustomId("analyze").setEmoji("🔍").setLabel("Detailed analysis").setStyle(ButtonStyle.Primary),
+                ),
+                new ActionRowBuilder().addComponents(
+                    new ButtonBuilder().setCustomId("delete").setEmoji("🗑️").setLabel("Delete message").setStyle(ButtonStyle.Danger),
+                    new ButtonBuilder().setCustomId("timeout").setEmoji("⏳").setLabel("Timeout user").setStyle(ButtonStyle.Danger),
+                    new ButtonBuilder().setCustomId("kick").setEmoji("🦵").setLabel("Kick user").setStyle(ButtonStyle.Danger),
+                    new ButtonBuilder().setCustomId("ban").setEmoji("🔨").setLabel("Ban user").setStyle(ButtonStyle.Danger),
+                )
+            ];
+
             if (channel) {
-                channel.send({ embeds: [embed] });
+                channel.send({ embeds: [embed], components: rows });
             }
         }
     } else {
