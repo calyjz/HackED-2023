@@ -104,7 +104,7 @@ client.on('interactionCreate', async interaction => {
         }
 
         if (interaction.message.embeds?.length > 0) {
-            handleButton(interaction, message);
+            handleButton(interaction, message, client);
         }
     }
 });
