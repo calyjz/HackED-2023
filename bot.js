@@ -1,7 +1,10 @@
-const { Client, Options, Partials, GatewayIntentBits } = require('@wozardlozard/discord.js');
+const { Client, Options, Partials, GatewayIntentBits, ChannelType } = require('@wozardlozard/discord.js');
 const process = require('node:process');
 
 require('dotenv').config();
+
+
+const { initialScan } = require('./content-moderation/initial-scan.js');
 
 
 /*
@@ -43,6 +46,10 @@ const client = new Client({
 });
 
 
+/*
+CONNECT TO DISCORD
+*/
+
 client.login(process.env.TOKEN).catch(err => {
     console.log("An error occurred while trying to connect to Discord: " + (err.stack || err));
 
@@ -52,8 +59,31 @@ client.login(process.env.TOKEN).catch(err => {
 });
 
 
+/*
+ONCE CONNECTED
+*/
+
 client.once('ready', async () => {
     if (global.gc) global.gc();
 
     console.log("Ready! Connected as " + client.user.tag + ".");
+});
+
+
+/*
+WHEN USER SENDS MESSAGE
+*/
+
+client.on('messageCreate', async message => {
+    if (!message) return;
+    if (message.author.id == process.env.BOT) return;
+    if (message.channel.type == ChannelType.DM) return;
+    if (!message.guild || !message.guild.available) return;
+    if (!message.author || message.author.bot || !message.channel) return;
+    if (!message.content) return;
+    if (message.channel.id == process.env.NOTIFCHANNEL) return;
+
+    var result = await initialScan(message.content, message.author, message.guild);
+
+    if (result) message.channel.send({ content: "```\n" + JSON.stringify(result) + "\n```" });
 });
