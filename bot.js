@@ -1,10 +1,11 @@
-const { Client, Options, Partials, GatewayIntentBits, ChannelType } = require('@wozardlozard/discord.js');
+const { Client, Options, Partials, GatewayIntentBits, ChannelType, InteractionType } = require('@wozardlozard/discord.js');
 const process = require('node:process');
 
 require('dotenv').config();
 
 
 const { initialScan } = require('./content-moderation/initial-scan.js');
+const { handleButton } = require('./events/button-interaction.js');
 
 
 /*
@@ -83,7 +84,27 @@ client.on('messageCreate', async message => {
     if (!message.content) return;
     if (message.channel.id == process.env.NOTIFCHANNEL) return;
 
-    var result = await initialScan(message.content, message.author, message.guild);
+    var result = await initialScan(message);
 
     if (result) message.channel.send({ content: "```\n" + JSON.stringify(result) + "\n```" });
+});
+
+
+/*
+WHEN BUTTON IS CLICKED
+*/
+
+client.on('interactionCreate', async interaction => {
+    if (interaction.isButton()) {
+        var message;
+        if (interaction.message.partial) {
+            message = await interaction.message.fetch();
+        } else {
+            message = interaction.message;
+        }
+
+        if (interaction.message.embeds?.length > 0) {
+            handleButton(interaction, message);
+        }
+    }
 });
