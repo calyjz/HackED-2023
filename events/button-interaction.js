@@ -9,7 +9,7 @@ exports.handleButton = async function(interaction, message, client) {
     if (embed.fields?.length > 0 && embed.fields[1] && embed.fields[2]) { // [1]: message link, [2]: author id
         var messageId = embed.fields[1].value.split("/")[embed.fields[1].value.split("/").length - 1];
         var channelId = embed.fields[1].value.split("/")[embed.fields[1].value.split("/").length - 2];
-        var authorId = embed.fields[2].value.slice(3, -1);
+        var authorId = embed.fields[2].value.split(" ")[0].slice(3, -1);
 
         switch (interaction.customId) {
             case "delete":
@@ -82,12 +82,15 @@ exports.handleButton = async function(interaction, message, client) {
                 try {
                     await member.timeout(durations[duration]);
                     collected.reply({ content: "The member was successfully timed out.", ephemeral: true });
-
-                    var rows = updateComponents(message.components, [1, 1]);
-
-                    message.edit({ embeds: [embed], components });
                 } catch {
                     collected.reply({ content: "The member could not be timed out.", ephemeral: true });
+                }
+
+                try {
+                    var rows = updateComponents(message.components, [1, 1]);
+                    message.edit({ embeds: [embed], components: rows });
+                } catch (err) {
+                    console.log(err);
                 }
 
                 break;
@@ -99,12 +102,15 @@ exports.handleButton = async function(interaction, message, client) {
                 try {
                     await member.kick();
                     interaction.reply({ content: "The member was successfully kicked.", ephemeral: true });
-
-                    var rows = updateComponents(message.components, [1, 2]);
-
-                    message.edit({ embeds: [embed], components: rows });
                 } catch {
                     interaction.reply({ content: "The member could not be kicked.", ephemeral: true });
+                }
+
+                try {
+                    var rows = updateComponents(message.components, [1, 2]);
+                    message.edit({ embeds: [embed], components: rows });
+                } catch (err) {
+                    console.log(err);
                 }
                 
                 break;
@@ -116,19 +122,26 @@ exports.handleButton = async function(interaction, message, client) {
                 try {
                     await member.ban();
                     interaction.reply({ content: "The member was successfully banned.", ephemeral: true });
-
-                    var rows = updateComponents(message.components, [1, 3]);
-
-                    message.edit({ embeds: [embed], components: rows });
                 } catch {
                     interaction.reply({ content: "The member could not be banned.", ephemeral: true });
+                }
+
+                try {
+                    var rows = updateComponents(message.components, [1, 3]);
+                    message.edit({ embeds: [embed], components: rows });
+                } catch (err) {
+                    console.log(err);
                 }
 
                 break;
 
             case "analyze":
                 try {
-                    await detailedAnalysis(message, embed.fields[0], 5);
+                    embed = await detailedAnalysis(message, embed.fields[0], 5, interaction);
+
+                    if (embed) {
+                        message.edit({ embeds: [embed], components: rows });
+                    }
                 } catch (err) {
                     console.log(err);
                     interaction.reply({ content: "The analysis failed.", ephemeral: true });
