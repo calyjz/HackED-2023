@@ -33,9 +33,11 @@ exports.analysis = async function (message, overlap) {
                 newIndex = oldIndex + separation;
             }
             outs.push(content.substring(oldIndex, newIndex));
-            oldIndex = newIndex - 1;
+            oldIndex = newIndex - overlap;
         }
     }
+
+    console.log(outs)
 
     /*
     The following sequence does not work. Try/catch throws an error.
