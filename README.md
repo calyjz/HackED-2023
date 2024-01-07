@@ -1,4 +1,4 @@
-# HackED-2023
+# HackED-2024: The Ben Hammer
 Hi there! This is a discord content moderation bot called **The Ben Hammer**, developed for the hackathon HackED 2023. 
 
 This bot uses models to detect and flag hate speech, harmful content, and misinformation.
