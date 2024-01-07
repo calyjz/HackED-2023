@@ -1,4 +1,4 @@
-const { EmbedBuilder } = require('@wozardlozard/discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('@wozardlozard/discord.js');
 const { OpenAI } = require('openai');
 const process = require('node:process');
 
@@ -8,53 +8,29 @@ const openai = new OpenAI({
 
 const { } = require('./initial-message-scan.js');
 
-exports.detailedAnalysis = async function (message, field, overlap) {
+exports.detailedAnalysis = async function (message, field, overlap, interaction) {
     var content = field.value;
     var length = content.length;
-    var outs = [];
     var responses = [];
+    var embed = EmbedBuilder.from(message.embeds[0]);
 
     var separation = Math.floor(length / 3);
     if (separation < overlap) {
         separation = length;
     }
 
-    if (length < separation) return;
-
-    /*
-    var newIndex = 0;
-    var oldIndex = 0;
-    var i;
-
-    for (i = 0; i < Math.floor(length / separation) + (Math.floor((length % separation + Math.floor(length / separation) * overlap) / separation)); i++) {
-        if ((length - (oldIndex + separation - overlap)) < separation) {
-            newIndex = length;
-        } else {
-            newIndex = oldIndex + separation;
-        }
-        outs.push(content.substring(oldIndex, newIndex));
-        oldIndex = newIndex - overlap;
-    }
-    
-    var tempRes;
-    var j;
-    for (j = 0; j < outs.length; j++) {
-        try {
-            tempRes = await openai.moderations.create({ input: outs[j] });
-        } catch (err) {
-            console.log(err);
-            return { error: true };
-        }
-
-        if (tempRes?.results?.length > 0) {
-            responses.push({ split: outs[j], result: tempRes.results[0] });
-        }
+    if (length < separation || length < 20) {
+        await interaction.reply({ content: "The flagged message is too short for a detailed analysis.", ephemeral: true });
+        return null;
     }
 
-    console.log(responses);
-    */
+    var rows = updateComponents(message.components, [0, 0]);
+    await message.edit({ embeds: [embed], components: rows });
 
-    responses = await splitSmall(content, overlap)
+    await interaction.reply({ content: "The detailed analysis is running. Please wait...", ephemeral: true });
+
+    responses = await splitSmall(content, overlap);
+    responses = responses.slice(0, 20);
 
     var violations = {
         "hate": "Hate speech",
@@ -72,12 +48,11 @@ exports.detailedAnalysis = async function (message, field, overlap) {
 
     var fields = [];
     var k;
-    
+
     let fieldString = "";
     for (k = 0; k < responses.length; k++) {
-        fieldString = fieldString + (responses[k].split + "\n" + ((responses[k].result.flagged) ? "• " + Object.entries(responses[k].result.categories).filter(x => x[1]).map(x => violations[x[0]] + ` (${(responses[k].result.category_scores[x[0]] * 100).toFixed(2)}% confidence)`).join("\n• ") : "Not flagged")) + "\n\n";
+        fields.push({ name: `Flagged phrase – ${responses[k].first} to ${responses[k].last}`, value: responses[k].split + "\n\n" + ((responses[k].result.flagged) ? "• " + Object.entries(responses[k].result.categories).filter(x => x[1]).map(x => violations[x[0]] + ` (${(responses[k].result.category_scores[x[0]] * 100).toFixed(2)}% confidence)`).join("\n• ") : "Not flagged") });
     }
-    fields.push({name: "Flagged phrases - Detailed Analysis:", value: `${fieldString}`});
 
     /*var embed = new EmbedBuilder()
         .setTitle("Message Flagged")
@@ -90,17 +65,12 @@ exports.detailedAnalysis = async function (message, field, overlap) {
         channel.send({ embeds: [embed] });
     }*/
 
-    //based laziness
-    if(fieldString.length > 1024) {
-        fieldString = fieldString.substring(0, 1000);
-    }
+    embed = embed.addFields(fields);
 
-    var embed = EmbedBuilder.from(message.embeds[0]).addFields(fields);
-    await message.edit({ embeds: [embed] });
+    return embed;
 }
 
-// loops to split the message into as small chunks as possible. only returns flagged
-// chunks and returns it with first and last indices
+
 async function splitSmall(value, overlap) {
     var realResponses = [];
     var responses = [{ split: value, first: 0, last: value.length, result: { flagged: false } }];
@@ -177,4 +147,28 @@ async function splitSmall(value, overlap) {
 
     console.log(realResponses)
     return realResponses;
+}
+
+
+function updateComponents(components, toDisable) {
+    var i, j;
+    var rows = [];
+
+    for (i = 0; i < components.length; i++) {
+        rows.push(new ActionRowBuilder());
+
+        for (j = 0; j < components[i].components.length; j++) {
+            if (toDisable[0] == i && toDisable[1] == j) {
+                rows[i].addComponents(
+                    new ButtonBuilder().setCustomId(components[i].components[j].customId).setEmoji(components[i].components[j].emoji).setLabel(components[i].components[j].label).setStyle(ButtonStyle.Success).setDisabled(true),
+                );
+            } else {
+                rows[i].addComponents(
+                    new ButtonBuilder().setCustomId(components[i].components[j].customId).setEmoji(components[i].components[j].emoji).setLabel(components[i].components[j].label).setStyle(components[i].components[j].style).setDisabled(components[i].components[j].disabled),
+                );
+            }
+        }
+    }
+
+    return rows;
 }
