@@ -11,4 +11,4 @@ Misinformation
 To combat misinformation in discord servers, we've integrated Google's fact checker API. To fact check a message, first click the three dots associated with that message. On mobile, users will need to hold down the message. Afterwards, navigate to apps -> fact check. After running this command, the Ben Hammer will send a list of relevant news articles related to the content in the initial message, allowing users to quickly access verified information and make informed decisions about the content of the message.
 
 ## Implementation
-This bot utilized Javascript, OpenAI API, Google Fact Check API, and Discord.js and was coded in uder 24 hours.
+This bot utilized Javascript, OpenAI API, Google Fact Check API, and Discord.js and was coded in under 24 hours.
