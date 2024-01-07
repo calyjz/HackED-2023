@@ -1,4 +1,4 @@
-# HackED-2024: The Ben Hammer
+# HackED-2024: Caleb's All-Seeing Eye
 Hi there! This is a discord content moderation bot called **Caleb's All-Seeing Eye**, developed for the hackathon HackED 2023. 
 
 This bot uses models to detect and flag hate speech, harmful content, and misinformation.
