@@ -69,3 +69,9 @@ exports.initialScan = async function(message) {
         return { clean: true };
     }
 }
+
+exports.scanMessage = async function(content){
+    
+
+    return res;
+}

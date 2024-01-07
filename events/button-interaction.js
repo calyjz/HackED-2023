@@ -1,10 +1,12 @@
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle } = require('@wozardlozard/discord.js');
+const analysis = require("./../content-moderation/detailed-analysis.js")
 
 exports.handleButton = async function(interaction, message, client) {
     var embed = message.embeds[0];
     var guild = client.guilds.cache.find(x => x.id == interaction.guildId);
 
     if (embed.fields?.length > 0 && embed.fields[1] && embed.fields[2]) { // [1]: message link, [2]: author id
+        var messageContent = embed.fields[0];
         var messageId = embed.fields[1].value.split("/")[embed.fields[1].value.split("/").length - 1];
         var channelId = embed.fields[1].value.split("/")[embed.fields[1].value.split("/").length - 2];
         var authorId = embed.fields[2].value.slice(3, -1);
@@ -119,6 +121,12 @@ exports.handleButton = async function(interaction, message, client) {
                     interaction.reply({ content: "The member could not be banned.", ephemeral: true });
                 }
                 break;
+            case "analyze":
+                try{
+                    await analysis.analysis(messageContent, 5);
+                } catch {
+                    interaction.reply({ content: "The analysis failed.", ephemeral: true});
+                }
                 break;
         }
     }
