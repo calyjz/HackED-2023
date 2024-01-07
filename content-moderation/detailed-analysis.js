@@ -55,7 +55,6 @@ exports.detailedAnalysis = async function (message, field, overlap) {
     */
 
     responses = await splitSmall(content, overlap)
-    console.log(responses);
 
     var violations = {
         "hate": "Hate speech",
@@ -90,6 +89,11 @@ exports.detailedAnalysis = async function (message, field, overlap) {
     if (channel) {
         channel.send({ embeds: [embed] });
     }*/
+
+    //based laziness
+    if(fieldString.length > 1024) {
+        fieldString = fieldString.substring(0, 1000);
+    }
 
     var embed = EmbedBuilder.from(message.embeds[0]).addFields(fields);
     await message.edit({ embeds: [embed] });
