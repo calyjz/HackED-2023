@@ -58,7 +58,12 @@ exports.handleButton = async function(interaction, message, client) {
                 await interaction.showModal(modal);
 
                 var filter = interaction => interaction.customId == "timeout-modal";
-                var collected = await interaction.awaitModalSubmit({ filter: filter, time: 90000 });
+
+                try {
+                    var collected = await interaction.awaitModalSubmit({ filter: filter, time: 90000 });
+                } catch {
+                    return;
+                }
 
                 var duration = collected?.fields?.getTextInputValue("timeout-input").toLowerCase();
                 if (!duration) return;
@@ -82,7 +87,6 @@ exports.handleButton = async function(interaction, message, client) {
                 } catch {
                     collected.reply({ content: "The member could not be timed out.", ephemeral: true });
                 }
-
                 break;
 
             case "kick":

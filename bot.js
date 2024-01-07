@@ -4,9 +4,11 @@ const process = require('node:process');
 require('dotenv').config();
 
 
-const { initialScan } = require('./content-moderation/scan-message.js');
+const { registerAppCommands } = require('./events/register-commands.js');
+const { initialMessageScan } = require('./content-moderation/initial-message-scan.js');
 const { handleButton } = require('./events/button-interaction.js');
 const { usernameScan } = require('./content-moderation/scan-username.js');
+const { handleMessageContextMenu } = require('./events/message-interaction.js')
 
 
 /*
@@ -44,7 +46,7 @@ const client = new Client({
     },
     failIfNotExists: false,
     partials: [Partials.Message, Partials.Channel, Partials.Reaction, Partials.User, Partials.GuildMember],
-    intents: [GatewayIntentBits.DirectMessages, GatewayIntentBits.DirectMessageReactions, GatewayIntentBits.Guilds, GatewayIntentBits.GuildModeration, GatewayIntentBits.GuildEmojisAndStickers, GatewayIntentBits.GuildInvites, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMessageReactions, GatewayIntentBits.GuildVoiceStates],
+    intents: [GatewayIntentBits.DirectMessages, GatewayIntentBits.DirectMessageReactions, GatewayIntentBits.Guilds, GatewayIntentBits.GuildModeration, GatewayIntentBits.GuildEmojisAndStickers, GatewayIntentBits.GuildInvites, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMembers, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMessageReactions, GatewayIntentBits.GuildVoiceStates],
 });
 
 
@@ -66,6 +68,8 @@ ONCE CONNECTED
 */
 
 client.once('ready', async () => {
+    await registerAppCommands();
+
     if (global.gc) global.gc();
 
     console.log("Ready! Connected as " + client.user.tag + ".");
@@ -85,7 +89,7 @@ client.on('messageCreate', async message => {
     if (!message.content) return;
     if (message.channel.id == process.env.NOTIFCHANNEL) return;
 
-    var result = await initialScan(message);
+    var result = await initialMessageScan(message);
 
     if (result) message.channel.send({ content: "```\n" + JSON.stringify(result) + "\n```" });
 });
@@ -133,6 +137,32 @@ client.on('interactionCreate', async interaction => {
 
         if (interaction.message.embeds?.length > 0) {
             handleButton(interaction, message, client);
+        } else {
+            await interaction.reply({ content: "An error occurred.", ephemeral: true });
         }
     }
+
+    if (interaction.isMessageContextMenuCommand()) {
+        var message;
+        if (interaction.targetMessage.partial) {
+            message = await interaction.targetMessage.fetch();
+        } else {
+            message = interaction.targetMessage;
+        }
+        
+        if (message.content && message.author && !message.author.bot) {
+            handleMessageContextMenu(interaction, message);
+        } else {
+            await interaction.reply({ content: "Fact check could not be performed on this message type.", ephemeral: true });
+        }
+    }
+});
+
+
+/*
+WHEN MEMBER JOINS SERVER
+*/
+
+client.on('guildMemberAdd', member => {
+    console.log(member.displayName);
 });
