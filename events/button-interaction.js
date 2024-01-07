@@ -84,6 +84,42 @@ exports.handleButton = async function(interaction, message, client) {
                 }
 
                 break;
+
+            case "kick":
+                // get the user
+                var member = await guild.members.fetch({ user: authorId, cache: false });
+                if (!member) return;//return if it doesnt exist
+                
+                try{
+                    //kicking the user
+                    member.kick();
+
+                    //print message
+                    interaction.reply({ content: "The member was successfully kicked.", ephemeral: true });
+                }
+                catch{
+                    interaction.reply({ content: "The member could not be kicked.", ephemeral: true });
+                }
+                break;
+                
+
+            case "ban":
+                //get member
+                var member = await guild.members.fetch({ user: authorId, cache: false });
+                if (!member) return;
+
+                try{
+                    //banning the user
+                    member.ban();
+
+                    //print message
+                    interaction.reply({ content: "The member was successfully banned.", ephemeral: true });
+                }
+                catch{
+                    interaction.reply({ content: "The member could not be banned.", ephemeral: true });
+                }
+                break;
+                break;
         }
     }
 }
