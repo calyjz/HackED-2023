@@ -119,7 +119,6 @@ exports.handleButton = async function(interaction, message, client) {
                     interaction.reply({ content: "The member could not be banned.", ephemeral: true });
                 }
                 break;
-                break;
         }
     }
 }
