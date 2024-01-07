@@ -4,8 +4,9 @@ const process = require('node:process');
 require('dotenv').config();
 
 
-const { initialScan } = require('./content-moderation/initial-scan.js');
+const { initialScan } = require('./content-moderation/scan-message.js');
 const { handleButton } = require('./events/button-interaction.js');
+const { usernameScan } = require('./content-moderation/scan-username.js');
 
 
 /*
@@ -88,6 +89,26 @@ client.on('messageCreate', async message => {
 
     if (result) message.channel.send({ content: "```\n" + JSON.stringify(result) + "\n```" });
 });
+
+/*
+CHECKING USERNAMES
+when users first join or update their usernames
+*/
+client.on('guildMemberAdd', async(member) =>{
+    //check if member variable is empty
+    if (!member) return;
+    
+    var result = await usernameScan(member);//check the username content
+
+    if(result) message.channel.send({content: "'''\n" + JSON.stringify(result) + "\n'''"});
+})
+/*
+if user joins{
+    get user
+    usernameScan()
+}
+
+*/
 
 
 /*
