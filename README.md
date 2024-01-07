@@ -12,3 +12,7 @@ To combat misinformation in discord servers, we've integrated Google's fact chec
 
 ## Implementation
 This bot utilized Javascript, OpenAI API, Google Fact Check API, and Discord.js and was coded in under 16 hours.
+
+
+The New Anonymous,
+Ben, Caleb, Caly, Jeffery, Jeremy
