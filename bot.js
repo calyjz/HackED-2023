@@ -7,7 +7,8 @@ require('dotenv').config();
 const { registerAppCommands } = require('./events/register-commands.js');
 const { initialMessageScan } = require('./content-moderation/initial-message-scan.js');
 const { handleButton } = require('./events/button-interaction.js');
-const { handleMessageContextMenu } = require('./events/message-interaction.js')
+const { handleMessageContextMenu } = require('./events/message-interaction.js');
+const { usernameScan } = require('./content-moderation/scan-username.js');
 
 
 /*
@@ -135,6 +136,17 @@ client.on('interactionCreate', async interaction => {
 WHEN MEMBER JOINS SERVER
 */
 
-client.on('guildMemberAdd', member => {
-    console.log(member.displayName);
+client.on('guildMemberAdd', async member => {
+    var result = await usernameScan(member);
+    if (result) message.channel.send({ content: "```\n" + JSON.stringify(result) + "\n```" });
+});
+
+
+/*
+WHEN MEMBER CHANGES PROFILE
+*/
+
+client.on('guildMemberUpdate', async (oldMember, newMember) => {
+    var result = await usernameScan(newMember);
+    if (result) message.channel.send({ content: "```\n" + JSON.stringify(result) + "\n```" });
 });

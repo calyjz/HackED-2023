@@ -16,7 +16,7 @@ exports.handleMessageContextMenu = async function(interaction, message) {
             factcheckResult = factcheckResult.slice(0, 5);
 
             for (i = 0; i < factcheckResult.length; i++) {
-                fields.push({ name: `Similar claim ${i + 1}`, value: `Claim: ${factcheckResult[i].text}\n\nClaimed by: ${factcheckResult[i].claimant}\nClaim date: ${factcheckResult[i].claimDate.split("T")[0]}\n\nAccording to [this article](${factcheckResult[i].claimReview[0].url}) written by ${factcheckResult[i].claimReview[0].publisher.name}, this claim is rated as: ${factcheckResult[i].claimReview[0].textualRating}` });
+                fields.push({ name: `Similar claim ${i + 1}`, value: `Claim: ${factcheckResult[i].text}\n\nClaimed by: ${factcheckResult[i].claimant}\nClaim date: ${factcheckResult[i].claimDate?.split("T")[0]}\n\nAccording to [this article](${factcheckResult[i].claimReview[0]?.url}) written by ${factcheckResult[i].claimReview[0]?.publisher?.name}, this claim is rated as: ${factcheckResult[i].claimReview[0]?.textualRating}` });
             }
 
             var embed = new EmbedBuilder()
