@@ -101,7 +101,14 @@ client.on('guildMemberAdd', async(member) =>{
     var result = await usernameScan(member);//check the username content
 
     if(result) message.channel.send({content: "'''\n" + JSON.stringify(result) + "\n'''"});
-})
+});
+
+client.on('guildMemberUpdate', async(newMember)=>{
+    if(!newMember) return;
+    var result = await usernameScan(newMember);
+    
+    if(result) message.channel.send({content: "'''\n" + JSON.stringify(result) + "\n'''"})
+});
 /*
 if user joins{
     get user
