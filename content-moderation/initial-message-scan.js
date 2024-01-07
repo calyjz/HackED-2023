@@ -6,23 +6,23 @@ const openai = new OpenAI({
     apiKey: process.env.OPENAI,
 });
 
-exports.initialScan = async function(message) {
+exports.initialMessageScan = async function(message) {
     var content = message.content;
     var url = message.url;
     var author = message.author;
     var guild = message.guild;
 
     try {
-        var res = await openai.moderations.create({ input: content });
+        var openaiQuery = await openai.moderations.create({ input: content });
     } catch (err) {
         console.log(err);
         return { error: true };
     }
 
-    if (res?.results?.length > 0) {
-        var result = res.results[0];
-        
-        if (result.flagged) {
+    if (openaiQuery?.results?.length > 0) {
+        var openaiResult = openaiQuery.results[0];
+
+        if (openaiResult.flagged) {
             var violations = {
                 "hate": "Hate speech",
                 "hate/threatening": "Hate speech with threat of violence",
@@ -43,8 +43,8 @@ exports.initialScan = async function(message) {
                 .addFields([
                     { name: "Message", value: content },
                     { name: "Message link", value: url, inline: true },
-                    { name: "Author", value: `<@!${author.id}>`, inline: true },
-                    { name: "Violated categories", value: Object.entries(result.categories).filter(x => x[1]).map(x => violations[x[0]] + ` (${(result.category_scores[x[0]] * 100).toFixed(2)}% confidence)`).join("\n"), inline: true },
+                    { name: "Author", value: `<@!${author.id}> (${author.tag})`, inline: true },
+                    { name: "Offensive language detected", value: "• " + Object.entries(openaiResult.categories).filter(x => x[1]).map(x => violations[x[0]] + ` (${(openaiResult.category_scores[x[0]] * 100).toFixed(2)}% confidence)`).join("\n• ") },
                 ]);
 
             var channel = guild.channels.cache.find(x => x.id == process.env.NOTIFCHANNEL);

@@ -58,7 +58,12 @@ exports.handleButton = async function(interaction, message, client) {
                 await interaction.showModal(modal);
 
                 var filter = interaction => interaction.customId == "timeout-modal";
-                var collected = await interaction.awaitModalSubmit({ filter: filter, time: 90000 });
+
+                try {
+                    var collected = await interaction.awaitModalSubmit({ filter: filter, time: 90000 });
+                } catch {
+                    return;
+                }
 
                 var duration = collected?.fields?.getTextInputValue("timeout-input").toLowerCase();
                 if (!duration) return;
@@ -81,6 +86,40 @@ exports.handleButton = async function(interaction, message, client) {
                     message.edit({ embeds: [embed], components });
                 } catch {
                     collected.reply({ content: "The member could not be timed out.", ephemeral: true });
+                }
+
+                break;
+
+            case "kick":
+                var member = await guild.members.fetch({ user: authorId, cache: false });
+                if (!member) return;
+
+                try {
+                    await member.kick();
+                    interaction.reply({ content: "The member was successfully kicked.", ephemeral: true });
+
+                    var rows = updateComponents(message.components, [1, 2]);
+
+                    message.edit({ embeds: [embed], components: rows });
+                } catch {
+                    interaction.reply({ content: "The member could not be kicked.", ephemeral: true });
+                }
+                
+                break;
+
+            case "ban":
+                var member = await guild.members.fetch({ user: authorId, cache: false });
+                if (!member) return;
+
+                try {
+                    await member.ban();
+                    interaction.reply({ content: "The member was successfully banned.", ephemeral: true });
+
+                    var rows = updateComponents(message.components, [1, 3]);
+
+                    message.edit({ embeds: [embed], components: rows });
+                } catch {
+                    interaction.reply({ content: "The member could not be banned.", ephemeral: true });
                 }
 
                 break;
