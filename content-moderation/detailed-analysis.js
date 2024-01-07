@@ -6,9 +6,9 @@ const openai = new OpenAI({
     apiKey: process.env.OPENAI,
 });
 
-const {} = require('./initial-message-scan.js');
+const { } = require('./initial-message-scan.js');
 
-exports.detailedAnalysis = async function(message, field, overlap) {
+exports.detailedAnalysis = async function (message, field, overlap) {
     var content = field.value;
     var length = content.length;
     var outs = [];
@@ -21,6 +21,7 @@ exports.detailedAnalysis = async function(message, field, overlap) {
 
     if (length < separation) return;
 
+    /*
     var newIndex = 0;
     var oldIndex = 0;
     var i;
@@ -34,9 +35,7 @@ exports.detailedAnalysis = async function(message, field, overlap) {
         outs.push(content.substring(oldIndex, newIndex));
         oldIndex = newIndex - overlap;
     }
-
-    console.log(outs);
-
+    
     var tempRes;
     var j;
     for (j = 0; j < outs.length; j++) {
@@ -52,6 +51,10 @@ exports.detailedAnalysis = async function(message, field, overlap) {
         }
     }
 
+    console.log(responses);
+    */
+
+    responses = await splitSmall(content, overlap)
     console.log(responses);
 
     var violations = {
@@ -70,11 +73,14 @@ exports.detailedAnalysis = async function(message, field, overlap) {
 
     var fields = [];
     var k;
+    
+    let fieldString = "";
     for (k = 0; k < responses.length; k++) {
-        fields.push({ name: `Split ${k + 1}`, value: responses[k].split + "\n\n" + ((responses[k].result.flagged) ? "• " + Object.entries(responses[k].result.categories).filter(x => x[1]).map(x => violations[x[0]] + ` (${(responses[k].result.category_scores[x[0]] * 100).toFixed(2)}% confidence)`).join("\n• ") : "Not flagged") });
+        fieldString = fieldString + (responses[k].split + "\n" + ((responses[k].result.flagged) ? "• " + Object.entries(responses[k].result.categories).filter(x => x[1]).map(x => violations[x[0]] + ` (${(responses[k].result.category_scores[x[0]] * 100).toFixed(2)}% confidence)`).join("\n• ") : "Not flagged")) + "\n\n";
     }
+    fields.push({name: "Flagged phrases - Detailed Analysis:", value: `${fieldString}`});
 
-    var embed = new EmbedBuilder()
+    /*var embed = new EmbedBuilder()
         .setTitle("Message Flagged")
         .setColor("Blurple")
         .addFields(fields);
@@ -83,14 +89,17 @@ exports.detailedAnalysis = async function(message, field, overlap) {
 
     if (channel) {
         channel.send({ embeds: [embed] });
-    }
+    }*/
+
+    var embed = EmbedBuilder.from(message.embeds[0]).addFields(fields);
+    await message.edit({ embeds: [embed] });
 }
 
 // loops to split the message into as small chunks as possible. only returns flagged
 // chunks and returns it with first and last indices
 async function splitSmall(value, overlap) {
     var realResponses = [];
-    var responses = [{split: value, first: 0, last: value.length, result: {flagged: false} }];
+    var responses = [{ split: value, first: 0, last: value.length, result: { flagged: false } }];
 
     while (responses.length > 0) {
         var response = responses.shift();
@@ -98,7 +107,7 @@ async function splitSmall(value, overlap) {
         var length = content.length;
         var offset = response.first;
         var outs = [];
-        
+
         if (length > 40) {
             var separation = Math.floor(length / 3);
         } else if (length > 20) {
@@ -110,13 +119,13 @@ async function splitSmall(value, overlap) {
         if (separation < overlap) {
             separation = length;
         }
-    
+
         if (length < separation) return;
-    
+
         var newIndex = 0;
         var oldIndex = 0;
         var i;
-    
+
         for (i = 0; i < Math.floor(length / separation) + (Math.floor((length % separation + Math.floor(length / separation) * overlap) / separation)); i++) {
             if ((length - (oldIndex + separation - overlap)) < separation) {
                 newIndex = length;
@@ -133,11 +142,11 @@ async function splitSmall(value, overlap) {
             } else {
                 last = newIndex;
             }
-            outs.push({value: content.substring(first, last), first: offset + first, last: offset + last});
-            
+            outs.push({ value: content.substring(first, last), first: offset + first, last: offset + last });
+
             oldIndex = newIndex - overlap;
         }
-    
+
         var tempResponses = [];
         var tempRes;
         var j;
@@ -149,7 +158,7 @@ async function splitSmall(value, overlap) {
                     console.log(err);
                     return { error: true };
                 }
-                
+
                 if (tempRes?.results?.length > 0 && tempRes.results[0].flagged) {
                     tempResponses.push({ split: outs[j].value, first: outs[j].first, last: outs[j].last, result: tempRes.results[0] });
                 }
@@ -158,7 +167,7 @@ async function splitSmall(value, overlap) {
         if (tempResponses.length > 0) {
             responses.push(...tempResponses);
         } else {
-            if (response.split != value) {realResponses.push(response);}
+            if (response.split != value) { realResponses.push(response); }
         }
     }
 

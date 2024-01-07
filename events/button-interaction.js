@@ -2,15 +2,14 @@ const { ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBui
 
 const { detailedAnalysis } = require('../content-moderation/detailed-analysis.js');
 
-exports.handleButton = async function(interaction, message, client) {
+exports.handleButton = async function (interaction, message, client) {
     var embed = message.embeds[0];
     var guild = client.guilds.cache.find(x => x.id == interaction.guildId);
 
     if (embed.fields?.length > 0 && embed.fields[1] && embed.fields[2]) { // [1]: message link, [2]: author id
         var messageId = embed.fields[1].value.split("/")[embed.fields[1].value.split("/").length - 1];
         var channelId = embed.fields[1].value.split("/")[embed.fields[1].value.split("/").length - 2];
-        var authorId = embed.fields[2].value.slice(3, -1);
-
+        var authorId = embed.fields[2].value.substring(3, 21);
         switch (interaction.customId) {
             case "delete":
                 var channel = guild.channels.cache.find(x => x.id == channelId);
@@ -93,7 +92,7 @@ exports.handleButton = async function(interaction, message, client) {
                 break;
 
             case "kick":
-                var member = await guild.members.fetch({ user: authorId, cache: false });
+                var member = await guild.members.fetch({ user: `${authorId}`, cache: false });
                 if (!member) return;
 
                 try {
@@ -106,7 +105,7 @@ exports.handleButton = async function(interaction, message, client) {
                 } catch {
                     interaction.reply({ content: "The member could not be kicked.", ephemeral: true });
                 }
-                
+
                 break;
 
             case "ban":
@@ -129,6 +128,10 @@ exports.handleButton = async function(interaction, message, client) {
             case "analyze":
                 try {
                     await detailedAnalysis(message, embed.fields[0], 5);
+
+                    var rows = updateComponents(message.components, [0, 0]);
+                    message.edit({ components: rows });
+
                 } catch (err) {
                     console.log(err);
                     interaction.reply({ content: "The analysis failed.", ephemeral: true });
@@ -139,7 +142,7 @@ exports.handleButton = async function(interaction, message, client) {
     }
 }
 
-
+//JEREMY COMMENT YOUR CODE :SOBBO:
 function updateComponents(components, toDisable) {
     var i, j;
     var rows = [];
